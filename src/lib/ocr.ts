@@ -190,7 +190,7 @@ export async function scanReceiptLocal(
 
   const T = await loadTesseract();
   const result = await T.recognize(imageFile, "ind+eng", {
-    logger: (m) => {
+    logger: (m: any) => {
       if (m.status === "recognizing text") {
         const pct = Math.round((m.progress || 0) * 100);
         onProgress?.(`Reading receipt... ${pct}%`);
