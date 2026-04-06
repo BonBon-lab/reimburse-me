@@ -1,7 +1,13 @@
 "use client";
 
-import Tesseract from "tesseract.js";
-
+let Tesseract: any = null;
+async function loadTesseract() {
+  if (!Tesseract) {
+    const mod = await import("tesseract.js");
+    Tesseract = mod.default || mod;
+  }
+  return Tesseract;
+}
 export interface OCRResult {
   amount: number;
   date: string;
@@ -182,7 +188,8 @@ export async function scanReceiptLocal(
 ): Promise<OCRResult> {
   onProgress?.("Loading OCR engine...");
 
-  const result = await Tesseract.recognize(imageFile, "ind+eng", {
+  const T = await loadTesseract();
+  const result = await T.recognize(imageFile, "ind+eng", {
     logger: (m) => {
       if (m.status === "recognizing text") {
         const pct = Math.round((m.progress || 0) * 100);
