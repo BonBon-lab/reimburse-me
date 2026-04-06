@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { scanReceiptLocal } from "@/lib/ocr";
 import {
   Category,
   Expense,
@@ -81,7 +80,7 @@ function AddExpenseView({ categories, onSaved }: { categories: Category[]; onSav
       if (res.ok) { const parsed = await res.json(); if (!parsed.error) { setAmount(String(parsed.amount || "")); setDate(parsed.date || new Date().toISOString().slice(0, 10)); setNote(parsed.note || "");
         const cat = categories.find(c => c.name.toLowerCase().includes(parsed.category)) || categories.find(c => c.name === "Other"); if (cat) setCategoryId(cat.id); setScanStage("done"); setScanning(false); return; } }
     } catch {}
-    try { const result = await scanReceiptLocal(file, (stage) => setScanStage(stage)); setAmount(String(result.amount || "")); setDate(result.date || new Date().toISOString().slice(0, 10)); setNote(result.note || "");
+    try { const { scanReceiptLocal } = await import("@/lib/ocr"); const result = await scanReceiptLocal(file, (stage) => setScanStage(stage)); setAmount(String(result.amount || "")); setDate(result.date || new Date().toISOString().slice(0, 10)); setNote(result.note || "");
       const cat = categories.find(c => c.name.toLowerCase().includes(result.category)) || categories.find(c => c.name === "Other"); if (cat) setCategoryId(cat.id); setScanStage("done"); setScanning(false);
     } catch { setScanStage("Could not read. Fill manually."); setScanning(false); setMode("manual"); }
   };
