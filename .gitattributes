@@ -1,0 +1,4 @@
+# Keep script line endings correct per-OS
+*.command text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
