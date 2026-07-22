@@ -1,6 +1,16 @@
 @echo off
-rem ReimburseMe launcher — installs/builds on first run, then starts the server.
+rem ReimburseMe launcher - installs/builds on first run, then starts the server.
 cd /d "%~dp0"
+
+rem If the app is already running, just show the address and exit.
+netstat -ano | findstr /r ":3000 .*LISTENING" >nul 2>nul
+if not errorlevel 1 (
+  echo ReimburseMe is already running.
+  echo On this PC:    http://localhost:3000
+  echo Close the other server window first if you want to restart it.
+  pause
+  exit /b 0
+)
 
 where node >nul 2>nul
 if errorlevel 1 (
@@ -10,7 +20,7 @@ if errorlevel 1 (
 )
 
 if not exist node_modules (
-  echo First run: installing dependencies ^(a few minutes^)...
+  echo First run: installing dependencies - takes a few minutes...
   call npm install
   if errorlevel 1 ( echo npm install failed. & pause & exit /b 1 )
 )
@@ -28,7 +38,7 @@ echo.
 echo ============================================
 echo  ReimburseMe is starting.
 echo  On this PC:    http://localhost:3000
-if defined IP echo  On your phone: http://%IP%:3000  ^(same Wi-Fi^)
+if defined IP echo  On your phone: http://%IP%:3000  - same Wi-Fi
 echo  Keep this window open. Close it to stop.
 echo ============================================
 echo.
