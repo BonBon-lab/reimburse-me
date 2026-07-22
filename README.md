@@ -10,9 +10,15 @@ Track expenses, snap receipts, generate reimbursement reports. Runs **fully loca
    git clone https://github.com/BonBon-lab/reimburse-me.git
    ```
    (or copy the project folder over on a USB stick — `node_modules` and `.next` can be skipped, they get rebuilt)
-3. **Double-click `start.bat`** — it installs dependencies and builds on first run (5–10 min), then starts the server and prints the address to open on your phone.
+3. Launch it:
+   - **Windows:** double-click **`start.bat`**
+   - **Mac:** double-click **`start.command`** (first time: right-click → Open to get past Gatekeeper; if it won't run, do `chmod +x start.command` once in Terminal)
+
+   It installs dependencies and builds on first run (5–10 min), then starts the server and prints the address to open on your phone.
 
 That's it. Subsequent starts take a few seconds.
+
+> **Copying instead of cloning?** Skip `node_modules` and `.next` — they contain per-OS built files and are recreated automatically on first launch. Everything else (including `data\`) copies cleanly between Windows, Mac, and Linux.
 
 ## Moving your data between PCs
 
