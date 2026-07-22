@@ -67,7 +67,7 @@ function AddExpenseView({ categories, onSaved }: { categories: Category[]; onSav
     if (!categoryId || !amount || saving) return; setSaving(true);
     try {
       const exp = await addExpense({ category_id: categoryId, amount: parseInt(String(amount).replace(/\D/g, "")) || 0, date, note: note || categories.find(c => c.id === categoryId)?.name || "Expense", has_receipt: hasReceipt });
-      if (receiptFile && exp.id) { try { const url = await uploadReceipt(exp.id, receiptFile); const { createClient } = await import("@/lib/supabase"); const supabase = createClient(); await supabase.from("expenses").update({ receipt_url: url }).eq("id", exp.id); } catch (e) { console.warn("Receipt upload failed:", e); } }
+      if (receiptFile && exp.id) { try { await uploadReceipt(exp.id, receiptFile); } catch (e) { console.warn("Receipt upload failed:", e); } }
       setSaved(true); setTimeout(() => { setSaved(false); resetForm(); onSaved(); }, 1200);
     } catch (e) { console.error("Save failed:", e); alert("Failed to save. Try again."); }
     setSaving(false);

@@ -32,6 +32,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# claude code worktrees / session files
+.claude/
+
+# local database & receipt photos (user data — never commit)
+/data/
 
 # vercel
 .vercel
