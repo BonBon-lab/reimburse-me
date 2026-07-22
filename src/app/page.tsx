@@ -85,7 +85,7 @@ function AddExpenseView({ categories, onSaved }: { categories: Category[]; onSav
     } catch { setScanStage("Could not read. Fill manually."); setScanning(false); setMode("manual"); }
   };
 
-  if (saved) return (<div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "70vh", gap: 16 }}><div className="animate-pop" style={{ fontSize: 64 }}>✅</div><p style={{ fontSize: 20, fontWeight: 700, color: "#F5F0EB" }}>Expense Saved!</p><p style={{ fontSize: 14, color: "#888" }}>Stored in cloud ☁️</p></div>);
+  if (saved) return (<div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "70vh", gap: 16 }}><div className="animate-pop" style={{ fontSize: 64 }}>✅</div><p style={{ fontSize: 20, fontWeight: 700, color: "#F5F0EB" }}>Expense Saved!</p><p style={{ fontSize: 14, color: "#888" }}>Saved on this PC 💾</p></div>);
 
   if (mode === null) return (<div style={{ padding: "20px 20px 100px" }}>
     <h2 style={{ fontSize: 22, fontWeight: 800, color: "#F5F0EB", margin: "0 0 8px", fontFamily: "'DM Serif Display', Georgia, serif" }}>Log Expense</h2><p style={{ fontSize: 14, color: "#888", margin: "0 0 28px" }}>How would you like to add it?</p>

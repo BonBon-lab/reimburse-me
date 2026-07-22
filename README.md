@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ReimburseMe
 
-## Getting Started
+Track expenses, snap receipts, generate reimbursement reports. Runs **fully locally** — all data stays in a `data\` folder on the host PC (SQLite database + receipt photos). No cloud account needed.
 
-First, run the development server:
+## Run on a new PC (from zero)
+
+1. Install **Node.js LTS** from [nodejs.org](https://nodejs.org) (accept all defaults).
+2. Get this code onto the PC:
+   ```bash
+   git clone https://github.com/BonBon-lab/reimburse-me.git
+   ```
+   (or copy the project folder over on a USB stick — `node_modules` and `.next` can be skipped, they get rebuilt)
+3. **Double-click `start.bat`** — it installs dependencies and builds on first run (5–10 min), then starts the server and prints the address to open on your phone.
+
+That's it. Subsequent starts take a few seconds.
+
+## Moving your data between PCs
+
+All expenses, categories, reports, and receipt photos live in the **`data\` folder**:
+
+| File | Contents |
+|---|---|
+| `data\reimburseme.db` | The database (expenses, categories, reports) |
+| `data\receipts\` | Receipt photos, named by expense ID |
+
+To move or back up: copy the `data\` folder. To start fresh: delete it (a new empty one is created on next launch).
+
+## Using from your phone
+
+The phone must be on the **same Wi-Fi** as the host PC. Open the `http://192.168.x.x:3000` address that `start.bat` prints. Receipt scanning uses the phone's camera directly.
+
+## AI receipt scanning (optional)
+
+By default receipts are read by the built-in offline OCR (free, works without internet, tuned for Indonesian receipts). For higher accuracy, add a Claude API key:
+
+1. Copy `.env.example` to `.env.local`
+2. Fill in `ANTHROPIC_API_KEY` (get one at [console.anthropic.com](https://console.anthropic.com))
+3. Restart the server
+
+Without a key everything still works — scanning silently falls back to offline OCR.
+
+## Manual commands (what start.bat runs)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install     # once, after cloning or when dependencies change
+npm run build   # once, after code changes
+npm run start   # start the server (production mode — use this, not `npm run dev`)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`npm run dev` is for development only — it is slow and blocks phones on the network unless their IP is listed in `allowedDevOrigins` in `next.config.ts`.
