@@ -31,6 +31,10 @@ export async function addExpense(expense: { category_id: string; amount: number;
   });
 }
 
+export async function deleteExpense(id: string): Promise<void> {
+  await api(`/api/expenses?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
 export async function uploadReceipt(expenseId: string, file: File): Promise<string> {
   const form = new FormData();
   form.append("expenseId", expenseId);

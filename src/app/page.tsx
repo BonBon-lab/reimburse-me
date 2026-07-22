@@ -11,6 +11,7 @@ import {
   getReports,
   markAsReimbursed,
   uploadReceipt,
+  deleteExpense,
 } from "@/lib/db";
 
 function formatRp(a: number) { return "Rp " + a.toLocaleString("id-ID"); }
@@ -133,7 +134,7 @@ function Report({ expenses, categories, onReimbursed }: { expenses: Expense[]; c
   const byCat: Record<string, { cat: Category; items: Expense[]; total: number }> = {};
   filtered.forEach((e) => { const cat = categories.find((c) => c.id === e.category_id); if (!cat) return; if (!byCat[cat.id]) byCat[cat.id] = { cat, items: [], total: 0 }; byCat[cat.id].items.push(e); byCat[cat.id].total += e.amount; });
   const handleMark = async () => { setMarking(true); try { const bd = Object.fromEntries(Object.entries(byCat).map(([k, v]) => [v.cat.name, v.total])); await markAsReimbursed(filtered.map(e => e.id), dateFrom, dateTo, total, bd); setDone(true); setTimeout(() => onReimbursed(), 2000); } catch (e) { alert("Failed. Try again."); } setMarking(false); };
-  if (done) return (<div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "70vh", gap: 16, padding: "0 20px" }}><div className="animate-pop" style={{ fontSize: 64 }}>💰</div><p style={{ fontSize: 22, fontWeight: 800, color: "#9CE87C", fontFamily: "'DM Serif Display', Georgia, serif" }}>Reimbursed!</p><p style={{ fontSize: 16, fontWeight: 700, color: "#F5F0EB" }}>{formatRp(total)}</p><p style={{ fontSize: 14, color: "#888" }}>Saved to cloud ☁️</p></div>);
+  if (done) return (<div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "70vh", gap: 16, padding: "0 20px" }}><div className="animate-pop" style={{ fontSize: 64 }}>💰</div><p style={{ fontSize: 22, fontWeight: 800, color: "#9CE87C", fontFamily: "'DM Serif Display', Georgia, serif" }}>Reimbursed!</p><p style={{ fontSize: 16, fontWeight: 700, color: "#F5F0EB" }}>{formatRp(total)}</p><p style={{ fontSize: 14, color: "#888" }}>Saved on this PC 💾</p></div>);
   return (<div style={{ padding: "20px 20px 100px" }}>
     <h2 style={{ fontSize: 22, fontWeight: 800, color: "#F5F0EB", margin: "0 0 24px", fontFamily: "'DM Serif Display', Georgia, serif" }}>Reimbursement Report</h2>
     <div style={{ display: "flex", gap: 12, marginBottom: 20 }}><div style={{ flex: 1 }}><p style={{ fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, margin: "0 0 8px" }}>From</p><input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setGenerated(false); }} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "12px 14px", fontSize: 14, color: "#F5F0EB", outline: "none", colorScheme: "dark" }} /></div><div style={{ flex: 1 }}><p style={{ fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, margin: "0 0 8px" }}>To</p><input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setGenerated(false); }} style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "12px 14px", fontSize: 14, color: "#F5F0EB", outline: "none", colorScheme: "dark" }} /></div></div>
@@ -177,13 +178,27 @@ function History({ reports, categories, onViewReceipt }: { reports: (Reimburseme
   </div>);
 }
 
-function ReceiptModal({ expense, onClose }: { expense: Expense | null; onClose: () => void }) {
+function ReceiptModal({ expense, onClose, onDelete }: { expense: Expense | null; onClose: () => void; onDelete?: (id: string) => Promise<void> }) {
+  const [confirming, setConfirming] = useState(false); const [deleting, setDeleting] = useState(false);
+  useEffect(() => { setConfirming(false); setDeleting(false); }, [expense]);
   if (!expense) return null; const img = expense.receipt_url;
+  const canDelete = !!onDelete && expense.status === "pending";
+  const handleDelete = async () => { if (deleting) return; setDeleting(true); try { await onDelete!(expense.id); } catch { alert("Failed to delete. Try again."); setDeleting(false); } };
   return (<div onClick={onClose} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
     <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 390, background: "#1E1E24", borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" }}>
       <div style={{ width: "100%", minHeight: 240, maxHeight: 400, background: img ? "#000" : "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>{img ? <img src={img} alt="Receipt" style={{ width: "100%", height: "100%", objectFit: "contain", maxHeight: 400 }} /> : <div style={{ textAlign: "center", padding: 40 }}><span style={{ fontSize: 56, opacity: 0.3 }}>🧾</span><p style={{ fontSize: 14, color: "#555", margin: "12px 0 0" }}>No receipt image</p></div>}</div>
       <div style={{ padding: "20px 24px" }}><div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}><div style={{ width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: `${expense.category_color || "#888"}18` }}>{expense.category_icon || "📝"}</div><div><p style={{ fontSize: 11, color: "#888", margin: 0, textTransform: "uppercase", fontWeight: 600 }}>{expense.category_name || "Expense"}</p><p style={{ fontSize: 22, fontWeight: 800, color: "#E8927C", margin: 0, fontFamily: "'DM Serif Display', Georgia, serif" }}>{formatRp(expense.amount)}</p></div></div><div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 14 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span style={{ fontSize: 12, color: "#666" }}>Note</span><span style={{ fontSize: 13, color: "#ccc", fontWeight: 600, textAlign: "right", maxWidth: "65%" }}>{expense.note}</span></div><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span style={{ fontSize: 12, color: "#666" }}>Date</span><span style={{ fontSize: 13, color: "#ccc", fontWeight: 600 }}>{formatDate(expense.date)}</span></div><div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 12, color: "#666" }}>Receipt</span><span style={{ fontSize: 13, color: img ? "#9CE87C" : "#E8927C", fontWeight: 600 }}>{img ? "✅ Archived" : "❌ No image"}</span></div></div></div>
-      <button onClick={onClose} style={{ width: "100%", padding: "16px", background: "rgba(255,255,255,0.05)", border: "none", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: 14, fontWeight: 700, color: "#888", cursor: "pointer" }}>Close</button>
+      {!confirming ? (<div style={{ display: "flex", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        {canDelete && (<button onClick={() => setConfirming(true)} style={{ flex: 1, padding: "16px", background: "rgba(232,92,92,0.08)", border: "none", borderRight: "1px solid rgba(255,255,255,0.06)", fontSize: 14, fontWeight: 700, color: "#E85C5C", cursor: "pointer" }}>🗑 Delete</button>)}
+        <button onClick={onClose} style={{ flex: canDelete ? 1 : undefined, width: canDelete ? undefined : "100%", padding: "16px", background: "rgba(255,255,255,0.05)", border: "none", fontSize: 14, fontWeight: 700, color: "#888", cursor: "pointer" }}>Close</button>
+      </div>) : (<div className="animate-fadeUp" style={{ padding: 20, borderTop: "1px solid rgba(232,92,92,0.3)", background: "rgba(232,92,92,0.06)" }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: "#F5F0EB", margin: "0 0 6px" }}>Delete this expense?</p>
+        <p style={{ fontSize: 12, color: "#aaa", margin: "0 0 16px" }}>{formatRp(expense.amount)} — {expense.note}. This can't be undone{img ? " and the receipt photo will also be removed" : ""}.</p>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={() => setConfirming(false)} disabled={deleting} style={{ flex: 1, padding: "13px", background: "rgba(255,255,255,0.05)", border: "2px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 13, fontWeight: 700, color: "#888", cursor: "pointer" }}>Cancel</button>
+          <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, padding: "13px", background: deleting ? "rgba(232,92,92,0.2)" : "#E85C5C", border: "none", borderRadius: 12, fontSize: 13, fontWeight: 800, color: deleting ? "#E85C5C" : "#16161A", cursor: deleting ? "default" : "pointer" }}>{deleting ? "Deleting..." : "Yes, Delete"}</button>
+        </div>
+      </div>)}
     </div>
   </div>);
 }
@@ -218,6 +233,6 @@ export default function Home() {
     {page === "report" && <Report expenses={expenses} categories={categories} onReimbursed={handleReimbursed} />}
     {page === "history" && <History reports={reports} categories={categories} onViewReceipt={setViewingReceipt} />}
     <BottomNav active={page} onNav={setPage} pendingCount={expenses.length} />
-    {viewingReceipt && <ReceiptModal expense={viewingReceipt} onClose={() => setViewingReceipt(null)} />}
+    {viewingReceipt && <ReceiptModal expense={viewingReceipt} onClose={() => setViewingReceipt(null)} onDelete={async (id) => { await deleteExpense(id); setViewingReceipt(null); loadData(); }} />}
   </div>);
 }

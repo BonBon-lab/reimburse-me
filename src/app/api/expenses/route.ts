@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { getDb, rowToExpense, EXPENSE_SELECT } from "@/lib/sqlite";
+import fs from "fs";
+import path from "path";
+import { getDb, rowToExpense, EXPENSE_SELECT, RECEIPTS_DIR } from "@/lib/sqlite";
 
 export const dynamic = "force-dynamic";
 
@@ -44,4 +46,37 @@ export async function POST(request: NextRequest) {
     .prepare(`${EXPENSE_SELECT} WHERE e.id = ?`)
     .get(id) as Record<string, unknown>;
   return NextResponse.json(rowToExpense(row));
+}
+
+// Delete a pending expense (and its receipt file). Expenses already tied to
+// a reimbursement report are protected — deleting them would corrupt totals.
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+
+  const db = getDb();
+  const expense = db
+    .prepare("SELECT id, report_id, receipt_url FROM expenses WHERE id = ?")
+    .get(id) as { id: string; report_id: string | null; receipt_url: string | null } | undefined;
+
+  if (!expense) {
+    return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+  }
+  if (expense.report_id) {
+    return NextResponse.json(
+      { error: "Expense is part of a reimbursement report and cannot be deleted" },
+      { status: 409 }
+    );
+  }
+
+  if (expense.receipt_url) {
+    const filename = path.basename(expense.receipt_url);
+    const filePath = path.join(RECEIPTS_DIR, filename);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+  db.prepare("DELETE FROM expenses WHERE id = ?").run(id);
+
+  return NextResponse.json({ deleted: true });
 }
