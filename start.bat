@@ -3,7 +3,7 @@ rem ReimburseMe launcher - installs/builds on first run, then starts the server.
 cd /d "%~dp0"
 
 rem If the app is already running, just show the address and exit.
-netstat -ano | findstr /r ":3000 .*LISTENING" >nul 2>nul
+netstat -ano | findstr /r /c:":3000 .*LISTENING" >nul 2>nul
 if not errorlevel 1 (
   echo ReimburseMe is already running.
   echo On this PC:    http://localhost:3000
